@@ -238,7 +238,3 @@ make lint
 # Clean up artifacts
 make clean
 ```
-
-## License
-
-MIT 
