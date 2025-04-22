@@ -33,6 +33,10 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
+As you may know, Arch-based are a bit tricky with Python stuff. 
+If that's your case, I would recommend you to install it via installation script.
+Ther's also an installation script for Windows but.
+
 ### Requirements
 
 - Python 3.11+
