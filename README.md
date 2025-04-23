@@ -1,87 +1,81 @@
-# Numen - AI-Augmented Terminal Notepad
+# ✨ Numen — AI-Augmented Terminal Notepad
 
-Numen is a sleek, Markdown-compatible terminal notepad that allows users to take notes, write snippets of code, and send selected text to AI models (Claude, GPT-4, Gemini, or local models like Ollama) for expansion, summarization, or transformation.
+**Numen** is a sleek, Markdown-first terminal notepad that brings your notes to life with the power of AI. Write code snippets, brainstorm ideas, and transform text seamlessly with models like **Claude 3**, **GPT-4**, **Gemini**, or local engines like **Ollama** — all from the comfort of your terminal.
 
+---
 
 https://github.com/user-attachments/assets/029ed3b6-e5f1-4087-9b9e-44406e2ad660
 
+---
 
-## Features
+## 🚀 Features
 
-- **Markdown-first** editing experience
-- **AI integration** with multiple providers:
-  - Anthropic Claude 3
-  - OpenAI GPT-4
-  - Google Gemini
-  - Ollama (local LLMs)
-- **Tag-based** organization system
-- **Powerful CLI** interface
-- **Local file-based** storage (no cloud sync)
-- **Rich text display** in terminal
-- **Backup and import** for data safety
-- **Statistics and insights** about your notes
+- 📝 **Markdown-first editing** experience
+- 🤖 **Multi-AI integration**: Claude 3, GPT-4, Gemini, Ollama
+- 🏷️ **Tag-based** note organization
+- ⚡ **Powerful CLI** interface
+- 💾 **Local-first** storage (no cloud, full control)
+- 🖼️ **Rich-text terminal display**
+- 🔐 **Backup & import** functionality
+- 📊 **Stats & insights** on your note-taking habits
 
-## Installation
+---
 
-### From Source
+## 📦 Installation
+
+### 🛠 From Source
 
 ```bash
-# Clone the repository
+# Clone the repo
 git clone https://github.com/aguiarsc/numen.git
 cd numen
 
-# Basic installation (without AI features)
+# Install core (no AI)
 pip install -e .
 
-# With specific AI provider
-pip install -e ".[gemini]"    # Google Gemini (no Rust required)
-pip install -e ".[anthropic]" # Anthropic Claude (requires Rust)
-pip install -e ".[openai]"    # OpenAI GPT (requires Rust)
+# Add AI provider support:
+pip install -e ".[gemini]"     # Google Gemini (Rust-free)
+pip install -e ".[anthropic]"  # Claude 3 (needs Rust)
+pip install -e ".[openai]"     # OpenAI GPT (needs Rust)
 
-# With all AI providers
-pip install -e ".[all-ai]"    # All providers (requires Rust)
+# All providers
+pip install -e ".[all-ai]"
 
-# For development (includes testing tools)
+# For development (includes tests, linters, etc.)
 pip install -e ".[dev]"
 ```
 
-### About Rust Dependencies
+### 🧰 Rust Requirements
 
-Some AI providers (Anthropic Claude and OpenAI GPT) depend on packages that require Rust to be installed on your system. These dependencies are now optional, so you can choose to:
+Claude and GPT integrations depend on Rust. You can:
 
-1. Install only the basic functionality without AI features
-2. Use Gemini or Ollama providers which don't require Rust
-3. Install the full package with all providers if you have Rust available
+1. Skip AI and use it as a standard notepad  
+2. Use **Gemini** or **Ollama** (no Rust required)  
+3. Install all AI tools if Rust is available
 
-The application will automatically detect which AI providers are available and use fallbacks when necessary.
+Numen smartly detects what’s available and falls back gracefully.
 
+### 🐧 Arch Linux (and friends)
 
-### About Arch-based distros
-As you may know, Arch-based systems are a bit tricky with Python stuff. 
-If that's your case, I would recommend you to install it via installation script.
-Ther's also an installation script for Windows but.
+Arch can be finicky with Python packages. Prefer using the install script provided in the repo. There's one for Windows too.
 
+---
 
-### Requirements
+## ⚙️ Configuration
 
-- Python 3.11+
-- A terminal with a monospaced font that supports Unicode
+Numen stores config and notes in `~/.numen/`.
 
-## Setup
-
-Numen stores its configuration and notes in your home directory at `~/.numen/`.
-
-When first run, Numen will create a default configuration file at `~/.numen/config.toml`. You'll need to edit this file to add your API keys:
+First run:
 
 ```bash
 numen config
 ```
 
-Update the config with your API keys:
+This creates `~/.numen/config.toml`. Add your API keys:
 
 ```toml
 [ai]
-default_provider = "gemini"  # Options: anthropic, openai, gemini, ollama
+default_provider = "gemini"
 anthropic_api_key = "your-api-key"
 openai_api_key = "your-api-key"
 gemini_api_key = "your-api-key"
@@ -90,176 +84,132 @@ default_model = "gemini-1.5-flash"
 temperature = 0.7
 
 [editor]
-default = "nvim"  # Will fall back to $EDITOR environment variable if not set
+default = "nvim"
 
 [paths]
 notes_dir = "~/.numen/notes"
 ```
 
-## Usage
+---
 
-### Basic Commands
+## 💡 Usage
+
+### ✍️ Core CLI Commands
 
 ```bash
-# Create a new note
-numen new "My new idea"
-
-# List all notes
-numen list
-
-# List notes with specific tag
-numen list --tag inspiration
-
-# Edit a note
-numen edit my-note.md
-
-# View a note without editing
-numen view my-note.md
-
-# View raw note content (including frontmatter)
-numen view my-note.md --raw
-
-# Search for content
-numen search "Python CLI"
-
-# Tag management
-numen tag my-note.md +inspiration -draft
-
-# Delete a note
-numen remove my-note.md
-
-# Force delete without confirmation
-numen remove my-note.md --force
+numen new "Note title"        # Create a note
+numen list                    # List all notes
+numen list --tag idea         # Filter by tag
+numen edit my-note            # Edit in $EDITOR
+numen view my-note            # Read-only display
+numen search "regex"          # Fuzzy search
+numen tag my-note +inspo      # Add or remove tags
+numen remove my-note          # Delete note
 ```
 
-### Statistics and Insights
+### 📈 Stats & Insights
 
 ```bash
-# View statistics about your notes collection
 numen stats
 ```
 
-This provides insights including:
-- Total number of notes
-- Date range and notes per month
-- Most used tags
-- Word count statistics
+- Total notes
+- Monthly breakdown
+- Top tags
+- Word count stats
 
-### Backup and Import
-
-```bash
-# Backup all notes to a zip file
-numen backup
-
-# Specify a custom backup location
-numen backup /path/to/my-backup.zip
-
-# Import notes from a backup
-numen import my-backup.zip
-
-# Import and overwrite existing notes
-numen import my-backup.zip --overwrite
-```
-
-### AI Integration
+### 📦 Backup & Restore
 
 ```bash
-# Expand a section of your note
-numen ai expand my-note.md --section 2
-
-# Summarize an entire note
-numen ai summarize my-note.md
-
-# Preview a summary without modifying the note
-numen ai summarize my-note.md --preview
-
-# Replace original text with the AI output instead of preserving it
-numen ai summarize my-note.md --replace
-
-# Transform text into something poetic
-numen ai poetic my-note.md --section 3
-
-# Use a custom AI instruction
-numen ai custom my-note.md "Rewrite this as a step-by-step tutorial"
+numen backup ./backup.zip             # Create zip
+numen import ./backup.zip             # Restore
+numen import ./backup.zip --overwrite # Overwrite existing
 ```
 
-## Note Structure
+### 🧠 AI Commands
 
-Notes are stored as Markdown files in `~/.numen/notes/` with YAML frontmatter:
+```bash
+numen ai expand my-note --section 2                 # Expand section
+numen ai summarize my-note                          # Summarize
+numen ai summarize my-note --preview                # Dry run
+numen ai summarize my-note --replace                # Inline replace
+numen ai poetic my-note --section 3                 # Make it lyrical
+numen ai custom my-note "Make it a love letter"     # Freeform AI prompt
+```
+
+---
+
+## 🗃 Note Structure
+
+Notes are stored in `~/.numen/notes/` as Markdown with frontmatter:
 
 ```markdown
 ---
-title: My Great Idea
-date: 2023-04-21T15:30:45.123456
-tags:
-  - inspiration
-  - project
-  - python
+title: A Bright Idea
+date: 2023-04-21T15:30:45
+tags: [inspiration, python, cli]
 ---
 
-# My Great Idea
+# A Bright Idea
 
-This is the content of my note. I can use **Markdown** formatting.
+Everything begins here.
 
 ## Details
 
-More details about my idea go here.
+Markdown. Syntax. Bliss.
 ```
 
-## Command Reference
+---
 
-### Core Commands
+## 🧾 Command Reference
 
-| Command | Description |
-|---------|-------------|
-| `new <title>` | Create a new note with the given title |
-| `list [--tag <tag>]` | List all notes, optionally filtered by tag |
-| `edit <note>` | Open a note in your preferred editor |
-| `view <note> [--raw]` | Display a note in the terminal without editing |
-| `search <query>` | Find notes containing specific text |
-| `tag <note> [+tag] [-tag]` | Add (+) or remove (-) tags from a note |
-| `remove <note> [--force]` | Delete a note, with optional force flag to skip confirmation |
-| `stats` | Display statistics about your note collection |
+### Core
 
-### File Management
+| Command                  | Description                             |
+|--------------------------|-----------------------------------------|
+| `new <title>`            | Create a new note                       |
+| `list [--tag <tag>]`     | List all notes (filtered if needed)     |
+| `edit <note>`            | Edit in your default terminal editor    |
+| `view <note> [--raw]`    | View content (raw optional)             |
+| `search <query>`         | Fuzzy search your notes                 |
+| `tag <note> [+tag] [-tag]`| Manage tags on notes                   |
+| `remove <note> [--force]`| Delete note (with optional force)       |
+| `stats`                  | Show statistics                         |
 
-| Command | Description |
-|---------|-------------|
-| `backup [path]` | Create a backup of all notes as a zip file |
-| `import <path> [--overwrite]` | Import notes from a backup zip file |
+### Backup & Restore
 
-### AI Features
+| Command                | Description                            |
+|------------------------|----------------------------------------|
+| `backup [path]`        | Backup all notes into a zip archive    |
+| `import <path>`        | Restore from a backup zip              |
+| `import <path> --overwrite`| Overwrite notes on restore         |
 
-| Command | Description |
-|---------|-------------|
-| `ai expand <note> [--section N] [--preview] [--replace]` | Expand content with AI |
-| `ai summarize <note> [--section N] [--preview] [--replace]` | Summarize content with AI |
-| `ai poetic <note> [--section N] [--preview] [--replace]` | Transform content into poetry with AI |
-| `ai custom <note> <instruction> [--section N] [--preview] [--replace]` | Process with custom AI instruction |
+### AI Tools
 
-### Configuration
+| Command                                              | Description                               |
+|------------------------------------------------------|-------------------------------------------|
+| `ai expand <note>`                                   | Expand content using AI                   |
+| `ai summarize <note>`                                | Generate summaries                        |
+| `ai poetic <note>`                                   | Make it poetic                            |
+| `ai custom <note> "<instruction>"`                   | Custom AI task                            |
+| `--section N`, `--preview`, `--replace` (any command) | Modify how AI interacts with note content |
 
-| Command | Description |
-|---------|-------------|
-| `config` | Edit the configuration file |
+---
 
-## Development
-
-For development, use the provided Makefile:
+## 🛠 Development
 
 ```bash
-# Install development dependencies
-make dev-install
-
-# Run tests
-make test
-
-# Format code
-make format
-
-# Run linters
-make lint
-
-# Clean up artifacts
-make clean
+make dev-install  # Install dev deps
+make test         # Run test suite
+make lint         # Lint code
+make format       # Format code
+make clean        # Clean up
 ```
+
+---
+
+## 🧠 Philosophy
+
+> *“A good note is a thought that refused to be forgotten.”*
+
+Numen is for tinkerers, thinkers, and terminal romantics. It’s a place to write raw ideas and refine them with the help of machines — all while staying offline, markdown-pure, and in full control.
