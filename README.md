@@ -30,16 +30,37 @@ https://github.com/user-attachments/assets/029ed3b6-e5f1-4087-9b9e-44406e2ad660
 git clone https://github.com/aguiarsc/numen.git
 cd numen
 
-# Install dependencies
+# Basic installation (without AI features)
 pip install -e .
+
+# With specific AI provider
+pip install -e ".[gemini]"    # Google Gemini (no Rust required)
+pip install -e ".[anthropic]" # Anthropic Claude (requires Rust)
+pip install -e ".[openai]"    # OpenAI GPT (requires Rust)
+
+# With all AI providers
+pip install -e ".[all-ai]"    # All providers (requires Rust)
 
 # For development (includes testing tools)
 pip install -e ".[dev]"
 ```
 
+### About Rust Dependencies
+
+Some AI providers (Anthropic Claude and OpenAI GPT) depend on packages that require Rust to be installed on your system. These dependencies are now optional, so you can choose to:
+
+1. Install only the basic functionality without AI features
+2. Use Gemini or Ollama providers which don't require Rust
+3. Install the full package with all providers if you have Rust available
+
+The application will automatically detect which AI providers are available and use fallbacks when necessary.
+
+
+### About Arch-based distros
 As you may know, Arch-based systems are a bit tricky with Python stuff. 
 If that's your case, I would recommend you to install it via installation script.
 Ther's also an installation script for Windows but.
+
 
 ### Requirements
 

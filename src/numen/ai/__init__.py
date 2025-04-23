@@ -2,17 +2,41 @@
 
 import json
 from typing import Dict, List, Optional, Union
+import importlib.util
 
-import anthropic
-import openai
-import requests
-import google.generativeai as genai
 from rich.console import Console
 
 from numen.config import get_ai_config
 from numen.utils import optimize_large_content
 
 console = Console()
+
+# Track available providers
+AVAILABLE_PROVIDERS = {
+    "anthropic": False,
+    "openai": False,
+    "gemini": False,
+    "ollama": True,  # Always available as it only uses requests
+}
+
+# Check which providers are installed
+try:
+    importlib.util.find_spec("anthropic")
+    AVAILABLE_PROVIDERS["anthropic"] = True
+except ImportError:
+    pass
+
+try:
+    importlib.util.find_spec("openai")
+    AVAILABLE_PROVIDERS["openai"] = True
+except ImportError:
+    pass
+
+try:
+    importlib.util.find_spec("google.generativeai")
+    AVAILABLE_PROVIDERS["gemini"] = True
+except ImportError:
+    pass
 
 EXPAND_PROMPT = """You're a professional writer. Expand on the following text into 2–3 cohesive paragraphs of prose while keeping the original voice and tone. Return only the expanded text without any explanations:
 
@@ -65,9 +89,14 @@ class AnthropicProvider(AIProvider):
     
     def __init__(self) -> None:
         super().__init__()
+        if not AVAILABLE_PROVIDERS["anthropic"]:
+            console.print("[red]Error: Anthropic library is not installed. Run 'pip install numen[anthropic]' to add support.")
+            raise ImportError("Anthropic library not installed")
+            
         api_key = self.config.get("anthropic_api_key", "")
         if not api_key:
             console.print("[red]Error: Anthropic API key is missing. Run 'numen config' to add your API key.")
+        import anthropic  # Import here to avoid global import errors
         self.client = anthropic.Anthropic(api_key=api_key)
     
     def generate_text(self, prompt: str) -> str:
@@ -102,9 +131,14 @@ class OpenAIProvider(AIProvider):
     
     def __init__(self) -> None:
         super().__init__()
+        if not AVAILABLE_PROVIDERS["openai"]:
+            console.print("[red]Error: OpenAI library is not installed. Run 'pip install numen[openai]' to add support.")
+            raise ImportError("OpenAI library not installed")
+            
         api_key = self.config.get("openai_api_key", "")
         if not api_key:
             console.print("[red]Error: OpenAI API key is missing. Run 'numen config' to add your API key.")
+        import openai  # Import here to avoid global import errors
         self.client = openai.OpenAI(api_key=api_key)
     
     def generate_text(self, prompt: str) -> str:
@@ -148,6 +182,7 @@ class OllamaProvider(AIProvider):
     def generate_text(self, prompt: str) -> str:
         """Generate text using Ollama."""
         try:
+            import requests  # Import here to ensure requests is available
             model = self.config.get("default_model", "llama3")
             if "claude" in model.lower() or "gpt" in model.lower():
                 model = "llama3"
@@ -180,20 +215,24 @@ class GeminiProvider(AIProvider):
     
     def __init__(self) -> None:
         super().__init__()
+        if not AVAILABLE_PROVIDERS["gemini"]:
+            console.print("[red]Error: Google Generative AI library is not installed. Run 'pip install numen[gemini]' to add support.")
+            raise ImportError("Google Generative AI library not installed")
+            
         api_key = self.config.get("gemini_api_key", "")
         if not api_key:
             console.print("[red]Error: Gemini API key is missing. Run 'numen config' to add your API key.")
             
         try:
+            import google.generativeai as genai  # Import here to avoid global import errors
             genai.configure(api_key=api_key)
         except Exception as e:
             console.print(f"[red]Error configuring Gemini: {e}")
     
     def generate_text(self, prompt: str) -> str:
         """Generate text using Google's Gemini AI."""
-        if not self.config.get("gemini_api_key"):
-            return "Error: Gemini API key is missing. Run 'numen config' to add your API key."
-            
+        import google.generativeai as genai  # Import here to avoid global import errors
+        
         try:
             model_name = self.config.get("default_model", "gemini-1.5-pro")
             if "gemini" not in model_name.lower():
@@ -224,30 +263,49 @@ class GeminiProvider(AIProvider):
 def get_ai_provider() -> AIProvider:
     """Get the configured AI provider."""
     config = get_ai_config()
-    provider_name = config.get("default_provider", "anthropic").lower()
+    provider_name = config.get("default_provider", "ollama").lower()
     
-    if provider_name == "anthropic":
-        return AnthropicProvider()
-    elif provider_name == "openai":
-        return OpenAIProvider()
-    elif provider_name == "ollama":
+    # Check for the requested provider
+    try:
+        if provider_name == "anthropic" and AVAILABLE_PROVIDERS["anthropic"]:
+            return AnthropicProvider()
+        elif provider_name == "openai" and AVAILABLE_PROVIDERS["openai"]:
+            return OpenAIProvider()
+        elif provider_name == "gemini" and AVAILABLE_PROVIDERS["gemini"]:
+            return GeminiProvider()
+        elif provider_name == "ollama":
+            return OllamaProvider()
+        
+        # Fall back to any available provider in this priority order
+        if AVAILABLE_PROVIDERS["anthropic"]:
+            console.print(f"[yellow]Provider '{provider_name}' is not available, falling back to Anthropic.[/yellow]")
+            return AnthropicProvider()
+        elif AVAILABLE_PROVIDERS["openai"]:
+            console.print(f"[yellow]Provider '{provider_name}' is not available, falling back to OpenAI.[/yellow]")
+            return OpenAIProvider()
+        elif AVAILABLE_PROVIDERS["gemini"]:
+            console.print(f"[yellow]Provider '{provider_name}' is not available, falling back to Gemini.[/yellow]")
+            return GeminiProvider()
+        else:
+            console.print(f"[yellow]Provider '{provider_name}' is not available, falling back to Ollama.[/yellow]")
+            return OllamaProvider()
+    except ImportError:
+        console.print(f"[yellow]Provider '{provider_name}' is not installed, falling back to Ollama.[/yellow]")
         return OllamaProvider()
-    elif provider_name == "gemini":
-        return GeminiProvider()
-    else:
-        console.print(f"[yellow]Unknown provider '{provider_name}', falling back to Anthropic")
-        return AnthropicProvider()
 
 
 def process_text(action: str, text: str) -> str:
     """Process text with the configured AI provider."""
-    provider = get_ai_provider()
-    
-    if action == "expand":
-        return provider.expand(text)
-    elif action == "summarize":
-        return provider.summarize(text)
-    elif action == "poetic":
-        return provider.poetic(text)
-    else:
-        return f"Unknown action: {action}"
+    try:
+        provider = get_ai_provider()
+        
+        if action == "expand":
+            return provider.expand(text)
+        elif action == "summarize":
+            return provider.summarize(text)
+        elif action == "poetic":
+            return provider.poetic(text)
+        else:
+            return f"Unknown action: {action}"
+    except Exception as e:
+        return f"Error processing text: {str(e)}\n\nIf this is a dependency issue, you can install the required providers with:\n- pip install numen[anthropic] - for Claude (requires Rust)\n- pip install numen[openai] - for GPT (requires Rust)\n- pip install numen[gemini] - for Gemini\n- pip install numen[all-ai] - for all providers"

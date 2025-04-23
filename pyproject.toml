@@ -25,11 +25,8 @@ dependencies = [
     "fs==2.4.16",
     "pyyaml==6.0.1",
     "toml==0.10.2",
-    "anthropic==0.21.3", 
-    "openai==1.23.0",
     "requests==2.31.0",
     "python-frontmatter==1.1.0",
-    "google-generativeai>=0.3.1",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +35,14 @@ dev = [
     "black>=23.0.0",
     "isort>=5.10.1",
     "mypy>=1.0.0",
+]
+anthropic = ["anthropic==0.21.3"]
+openai = ["openai==1.23.0"]
+gemini = ["google-generativeai>=0.3.1"]
+all-ai = [
+    "anthropic==0.21.3", 
+    "openai==1.23.0",
+    "google-generativeai>=0.3.1",
 ]
 
 [project.scripts]
