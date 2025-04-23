@@ -3,7 +3,7 @@
 Numen is a sleek, Markdown-compatible terminal notepad that allows users to take notes, write snippets of code, and send selected text to AI models (Claude, GPT-4, Gemini, or local models like Ollama) for expansion, summarization, or transformation.
 
 
-https://github.com/user-attachments/assets/d36b1a48-3e78-47e5-852b-74180e4baa27
+https://github.com/user-attachments/assets/029ed3b6-e5f1-4087-9b9e-44406e2ad660
 
 
 ## Features
