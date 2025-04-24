@@ -1,3 +1,8 @@
+<p align="center">
+  <a href="https://github.com/aguiarsc/numen/releases"><img src="https://img.shields.io/github/v/release/aguiarsc/numen?style=flat-square" alt="Latest Release"></a>
+  <a href="https://github.com/aguiarsc/numen/blob/main/LICENSE"><img src="https://img.shields.io/github/license/aguiarsc/numen?style=flat-square" alt="License"></a>
+</p>
+
 # ✨ Numen — AI-Augmented Terminal Notepad
 
 **Numen** is a sleek, Markdown-first terminal notepad that brings your notes to life with the power of AI. Write code snippets, brainstorm ideas, and transform text seamlessly with models like **Claude 3**, **GPT-4**, **Gemini**, or local engines like **Ollama** — all from the comfort of your terminal.
