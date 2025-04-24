@@ -13,6 +13,8 @@ https://github.com/user-attachments/assets/029ed3b6-e5f1-4087-9b9e-44406e2ad660
 - 📝 **Markdown-first editing** experience
 - 🤖 **Multi-AI integration**: Claude 3, GPT-4, Gemini, Ollama
 - 🏷️ **Tag-based** note organization
+- 📋 **Template system** for different note types
+- 📜 **Version history** with diff comparisons
 - ⚡ **Powerful CLI** interface
 - 💾 **Local-first** storage (no cloud, full control)
 - 🖼️ **Rich-text terminal display**
@@ -45,6 +47,28 @@ pip install -e ".[all-ai]"
 pip install -e ".[dev]"
 ```
 
+### 🐧 Arch Linux (and friends)
+
+Arch Linux uses an externally managed environment for Python packages. The recommended installation method is using the install script which automatically detects and uses pipx:
+
+```bash
+# Clone the repo
+git clone https://github.com/aguiarsc/numen.git
+cd numen
+
+# Run the install script (includes all AI providers by default)
+./install.sh --all-ai
+
+# Or for minimal installation without AI features
+./install.sh
+```
+
+This installation method:
+- Uses pipx to create an isolated environment
+- Avoids conflicts with system packages
+- Makes uninstallation cleaner (`./uninstall.sh` will use pipx too)
+- Works with Arch's PEP 668 externally managed environment
+
 ### 🧰 Rust Requirements
 
 Claude and GPT integrations depend on Rust. You can:
@@ -54,10 +78,6 @@ Claude and GPT integrations depend on Rust. You can:
 3. Install all AI tools if Rust is available
 
 Numen smartly detects what’s available and falls back gracefully.
-
-### 🐧 Arch Linux (and friends)
-
-Arch can be finicky with Python packages. Prefer using the install script provided in the repo. There's one for Windows too.
 
 ---
 
@@ -97,14 +117,37 @@ notes_dir = "~/.numen/notes"
 ### ✍️ Core CLI Commands
 
 ```bash
-numen new "Note title"        # Create a note
-numen list                    # List all notes
-numen list --tag idea         # Filter by tag
-numen edit my-note            # Edit in $EDITOR
-numen view my-note            # Read-only display
-numen search "regex"          # Fuzzy search
-numen tag my-note +inspo      # Add or remove tags
-numen remove my-note          # Delete note
+numen new "Note title"                    # Create a note
+numen new "Meeting Notes" -t meeting      # Create from template
+numen list                                # List all notes
+numen list --tag idea                     # Filter by tag
+numen edit my-note                        # Edit in $EDITOR
+numen view my-note                        # Read-only display
+numen search "regex"                      # Fuzzy search
+numen tag my-note +inspo                  # Add or remove tags
+numen remove my-note                      # Delete note
+```
+
+### 📋 Templates
+
+```bash
+numen templates list                      # List all templates
+numen templates create book-review        # Create new template
+numen templates edit meeting              # Edit a template
+numen templates show journal              # View template content
+numen templates delete my-template        # Delete a template
+numen templates reset meeting             # Reset default template
+```
+
+### 📜 Version History
+
+```bash
+numen history save my-note -m "Comment"   # Create a version
+numen history list my-note                # List all versions
+numen history view my-note 0              # View oldest version
+numen history restore my-note 1           # Revert to second oldest version
+numen history diff my-note 0 1            # Compare oldest vs second version
+numen history remove my-note              # Delete all version history
 ```
 
 ### 📈 Stats & Insights
@@ -168,6 +211,7 @@ Markdown. Syntax. Bliss.
 | Command                  | Description                             |
 |--------------------------|-----------------------------------------|
 | `new <title>`            | Create a new note                       |
+| `new <title> -t <template>` | Create note from template            |
 | `list [--tag <tag>]`     | List all notes (filtered if needed)     |
 | `edit <note>`            | Edit in your default terminal editor    |
 | `view <note> [--raw]`    | View content (raw optional)             |
@@ -175,6 +219,28 @@ Markdown. Syntax. Bliss.
 | `tag <note> [+tag] [-tag]`| Manage tags on notes                   |
 | `remove <note> [--force]`| Delete note (with optional force)       |
 | `stats`                  | Show statistics                         |
+
+### Templates
+
+| Command                      | Description                          |
+|------------------------------|--------------------------------------|
+| `templates list`             | List all available templates         |
+| `templates create <name>`    | Create a new template                |
+| `templates edit <name>`      | Edit an existing template            |
+| `templates show <name>`      | Display a template's content         |
+| `templates delete <name>`    | Delete a template                    |
+| `templates reset <name>`     | Reset a default template             |
+
+### Version History
+
+| Command                       | Description                         |
+|-------------------------------|-------------------------------------|
+| `history save <note> [-m]`    | Create a version with message       |
+| `history list <note>`         | List all versions of a note         |
+| `history view <note> <idx>`   | View a specific version (by index or ID) |
+| `history restore <note> <idx>`| Revert to a previous version        |
+| `history diff <note> <v1> <v2>` | Compare two versions              |
+| `history remove <note>`       | Delete all version history          |
 
 ### Backup & Restore
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "numen"
 version = "0.1.0"
-description = "AI-Augmented Terminal Notepad"
+description = "AI-Augmented Terminal Notepad with Templates"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [

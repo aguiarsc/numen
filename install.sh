@@ -22,19 +22,31 @@ fi
 if command -v pipx &> /dev/null; then
     echo "pipx found, using isolated installation (recommended)"
     
+    # Ask if user wants all AI features
+    read -p "Install all AI features? (recommended) [Y/n]: " install_ai
+    install_ai=${install_ai:-Y}  # Default to Yes
+    
+    install_opts=""
+    if [[ "$install_ai" =~ ^[Yy]$ ]]; then
+        install_opts="[all-ai]"
+        echo "Installing Numen with all AI providers..."
+    else
+        echo "Installing Numen core only..."
+    fi
+    
     # Check if already installed with pipx
     if pipx list | grep -q "numen"; then
         echo "Numen already installed with pipx, upgrading..."
-        pipx install . --force
+        pipx install -e .$install_opts --force
     else
         echo "Installing Numen with pipx..."
-        pipx install .
+        pipx install -e .$install_opts
     fi
     
     # Create config directory if it doesn't exist
     if [ ! -d ~/.numen ]; then
         echo "Setting up configuration..."
-        mkdir -p ~/.numen/notes ~/.numen/cache ~/.numen/logs
+        mkdir -p ~/.numen/notes ~/.numen/templates ~/.numen/cache ~/.numen/logs
     fi
     
     echo "✅ Installation complete! Run 'numen --help' to get started."
@@ -48,7 +60,7 @@ else
     
     # Create config directory
     echo "Setting up configuration..."
-    mkdir -p ~/.numen/notes ~/.numen/cache ~/.numen/logs
+    mkdir -p ~/.numen/notes ~/.numen/templates ~/.numen/cache ~/.numen/logs
     
     # Run numen for the first time to generate config
     echo "Generating initial configuration..."

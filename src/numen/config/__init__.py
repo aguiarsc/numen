@@ -24,6 +24,8 @@ DEFAULT_CONFIG = {
     },
     "paths": {
         "notes_dir": "~/.numen/notes",
+        "templates_dir": "~/.numen/templates",
+        "history_dir": "~/.numen/history",
     },
 }
 
@@ -35,6 +37,8 @@ def ensure_config_exists() -> None:
     try:
         os.makedirs(CONFIG_DIR, exist_ok=True)
         os.makedirs(os.path.join(CONFIG_DIR, "notes"), exist_ok=True)
+        os.makedirs(os.path.join(CONFIG_DIR, "templates"), exist_ok=True)
+        os.makedirs(os.path.join(CONFIG_DIR, "history"), exist_ok=True)
         os.makedirs(os.path.join(CONFIG_DIR, "cache"), exist_ok=True)
         os.makedirs(os.path.join(CONFIG_DIR, "logs"), exist_ok=True)
         
@@ -100,6 +104,18 @@ def get_notes_dir() -> pathlib.Path:
     config = get_config()
     notes_dir = os.path.expanduser(config["paths"]["notes_dir"])
     return pathlib.Path(notes_dir)
+
+
+def get_templates_dir() -> pathlib.Path:
+    config = get_config()
+    templates_dir = os.path.expanduser(config["paths"]["templates_dir"])
+    return pathlib.Path(templates_dir)
+
+
+def get_history_dir() -> pathlib.Path:
+    config = get_config()
+    history_dir = os.path.expanduser(config["paths"]["history_dir"])
+    return pathlib.Path(history_dir)
 
 
 def get_editor() -> str:

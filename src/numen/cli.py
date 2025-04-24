@@ -38,6 +38,18 @@ ai_app = typer.Typer(
 )
 app.add_typer(ai_app, name="ai")
 
+templates_app = typer.Typer(
+    help="Template management for different types of notes",
+    add_completion=False,
+)
+app.add_typer(templates_app, name="templates")
+
+history_app = typer.Typer(
+    help="Version history management for notes",
+    add_completion=False,
+)
+app.add_typer(history_app, name="history")
+
 console = Console()
 
 
@@ -59,17 +71,23 @@ Options: --section, --preview, --replace"""
 
 
 @app.command("new")
-def new_note(title: str = typer.Argument(..., help="Title of the new note")):
+def new_note(
+    title: str = typer.Argument(..., help="Title of the new note"),
+    template: str = typer.Option(None, "--template", "-t", help="Template to use for the note"),
+):
     """Create a new note with the given title.
     
     The note will be saved as a Markdown file with YAML frontmatter
     containing metadata like title, date, and tags.
     After creation, the note will open in your configured editor.
     
+    Use the --template option to create a note based on a predefined template.
+    
     Example:
       numen new "My New Note"
+      numen new "Meeting with Team" --template meeting
     """
-    note_path = create_note(title)
+    note_path = create_note(title, template)
     console.print(f"[green]Created note at:[/green] {note_path}")
     
     edit_note(str(note_path))
@@ -695,5 +713,425 @@ def note_statistics():
         console.print(f"Range: {min_words} to {max_words} words")
 
 
+@templates_app.callback()
+def templates_callback(ctx: typer.Context):
+    """Template management for different types of notes.
+
+Commands: list, create, edit, delete, reset, show
+    """
+    pass
+
+
+@templates_app.command("list")
+def list_templates_cmd():
+    """List all available templates.
+    
+    Displays templates with their names, titles, and descriptions.
+    Includes both default templates and any custom templates you've created.
+    
+    Example:
+      numen templates list
+    """
+    from numen.templates import list_templates, display_templates
+    
+    templates = list_templates()
+    
+    if not templates:
+        console.print("[yellow]No templates found.[/yellow]")
+        return
+    
+    display_templates(templates)
+
+
+@templates_app.command("create")
+def create_template_cmd(
+    name: str = typer.Argument(..., help="Name for the template (used as filename)"),
+    title: str = typer.Option(None, "--title", "-t", help="Display title for the template"),
+    description: str = typer.Option("", "--description", "-d", help="Description of the template"),
+):
+    """Create a new template.
+    
+    The template will be saved as a Markdown file that can be used
+    when creating new notes with 'numen new --template <name>'.
+    After creation, the template will open in your configured editor
+    so you can define its content.
+    
+    Example:
+      numen templates create book-review --title "Book Review Template" --description "For reviewing books"
+    """
+    from numen.templates import create_template, edit_template
+    
+    if title is None:
+        title = name.replace("-", " ").title()
+    
+    initial_content = """# {{title}}
+
+<!-- Your template content here. You can use variables like:
+- {{title}} - The title of the note
+- {{date}} - Current date (YYYY-MM-DD)
+- {{time}} - Current time (HH:MM)
+- {{datetime}} - Current date and time (YYYY-MM-DD HH:MM)
+-->
+
+"""
+    
+    template_path = create_template(name, title, description, initial_content)
+    console.print(f"[green]Created template:[/green] {template_path}")
+    
+    # Open the template for editing
+    edit_template(name)
+
+
+@templates_app.command("edit")
+def edit_template_cmd(name: str = typer.Argument(..., help="Template to edit")):
+    """Edit an existing template.
+    
+    Opens the template in your configured editor.
+    You can edit both the frontmatter metadata and the template content.
+    
+    Example:
+      numen templates edit meeting
+    """
+    from numen.templates import edit_template, ensure_default_templates
+    
+    ensure_default_templates()
+    success = edit_template(name)
+    
+    if not success:
+        console.print(f"[red]Failed to edit template: {name}[/red]")
+
+
+@templates_app.command("delete")
+def delete_template_cmd(
+    name: str = typer.Argument(..., help="Template to delete"),
+    force: bool = typer.Option(False, "--force", "-f", help="Force deletion without confirmation"),
+):
+    """Delete a template.
+    
+    Permanently removes a template from the filesystem.
+    By default, asks for confirmation before deletion.
+    Use --force to skip the confirmation prompt.
+    
+    Example:
+      numen templates delete my-template
+      numen templates delete my-template --force
+    """
+    from numen.templates import delete_template
+    
+    delete_template(name, force)
+
+
+@templates_app.command("reset")
+def reset_template_cmd(name: str = typer.Argument(..., help="Default template to reset")):
+    """Reset a default template to its original state.
+    
+    This will overwrite any changes you've made to a default template.
+    Only works with built-in templates.
+    
+    Example:
+      numen templates reset meeting
+    """
+    from numen.templates import reset_template
+    
+    reset_template(name)
+
+
+@templates_app.command("show")
+def show_template_cmd(name: str = typer.Argument(..., help="Template to display")):
+    """Display a template's content.
+    
+    Shows the raw content of the template including variables.
+    
+    Example:
+      numen templates show meeting
+    """
+    from numen.templates import get_template_content
+    
+    template_data = get_template_content(name)
+    
+    if not template_data:
+        console.print(f"[red]Template not found: {name}[/red]")
+        return
+    
+    metadata = template_data["metadata"]
+    content = template_data["content"]
+    
+    console.print(f"\n[bold cyan]Template:[/bold cyan] {name}")
+    console.print(f"[bold cyan]Title:[/bold cyan] {metadata.get('title', '')}")
+    console.print(f"[bold cyan]Description:[/bold cyan] {metadata.get('description', '')}\n")
+    
+    console.print("[bold]Template Content:[/bold]")
+    console.print("```markdown")
+    console.print(content)
+    console.print("```")
+
+
+@history_app.callback()
+def history_callback(ctx: typer.Context):
+    """Version history management for notes.
+
+Commands: save, list, view, restore, diff, remove
+    """
+    pass
+
+
+@history_app.command("save")
+def save_version_cmd(
+    note: str = typer.Argument(..., help="Note to save a version of"),
+    message: str = typer.Option(None, "--message", "-m", help="Description of this version"),
+):
+    """Save the current state of a note as a version.
+    
+    Creates a snapshot of the note that can be restored later.
+    Optionally add a message describing what changed in this version.
+    
+    Example:
+      numen history save my-note
+      numen history save my-note -m "Added section on AI integration"
+    """
+    from numen.history import save_version
+    from numen.notes import resolve_note_path
+    
+    note_path = resolve_note_path(note)
+    if not note_path:
+        console.print(f"[red]Note not found: {note}[/red]")
+        return
+    
+    try:
+        version_id = save_version(note_path, message)
+        console.print(f"[green]Saved version {version_id} of note: {note_path.stem}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error saving version: {e}[/red]")
+
+
+@history_app.command("list")
+def list_versions_cmd(
+    note: str = typer.Argument(..., help="Note to list versions for"),
+):
+    """List all saved versions of a note.
+    
+    Shows version indexes, IDs, timestamps, and commit messages.
+    Use these indexes or IDs with other commands like view, restore, or diff.
+    Index 0 is the oldest version.
+    
+    Example:
+      numen history list my-note
+    """
+    from numen.history import list_versions, display_versions
+    from numen.notes import resolve_note_path
+    
+    note_path = resolve_note_path(note)
+    if not note_path:
+        console.print(f"[red]Note not found: {note}[/red]")
+        return
+    
+    versions = list_versions(note_path)
+    
+    if not versions:
+        console.print(f"[yellow]No saved versions found for note: {note_path.stem}[/yellow]")
+        return
+    
+    console.print(f"[green]Found {len(versions)} versions for note: {note_path.stem}[/green]")
+    display_versions(versions)
+
+
+@history_app.command("view")
+def view_version_cmd(
+    note: str = typer.Argument(..., help="Note name"),
+    version: str = typer.Argument(..., help="Version ID or index to view (0 = oldest)"),
+    raw: bool = typer.Option(False, "--raw", "-r", help="Show raw content including frontmatter"),
+):
+    """View a specific version of a note.
+    
+    Displays the content of a saved version in the terminal.
+    The version can be specified by its ID or index from the 'history list' command.
+    Use index 0 for the oldest version, 1 for the second oldest, etc.
+    
+    Example:
+      numen history view my-note 0
+      numen history view my-note 20250424123456
+    """
+    from numen.history import get_version_content
+    from numen.notes import resolve_note_path
+    
+    note_path = resolve_note_path(note)
+    if not note_path:
+        console.print(f"[red]Note not found: {note}[/red]")
+        return
+    
+    # Convert version to int if it's a numeric string
+    try:
+        if version.isdigit():
+            version_ref = int(version)
+        else:
+            version_ref = version
+    except (ValueError, AttributeError):
+        version_ref = version
+    
+    content = get_version_content(note_path.stem, version_ref)
+    
+    if not content:
+        console.print(f"[red]Version {version} not found for note: {note_path.stem}[/red]")
+        return
+    
+    console.print(f"[green]Viewing version {version} of note: {note_path.stem}[/green]\n")
+    
+    if raw:
+        console.print(content)
+    else:
+        try:
+            post = frontmatter.loads(content)
+            md = Markdown(post.content)
+            console.print(md)
+        except Exception:
+            # Fallback to raw display if parsing fails
+            console.print(content)
+
+
+@history_app.command("restore")
+def restore_version_cmd(
+    note: str = typer.Argument(..., help="Note to restore"),
+    version: str = typer.Argument(..., help="Version ID or index to restore to (0 = oldest)"),
+    force: bool = typer.Option(False, "--force", "-f", help="Restore without confirmation"),
+):
+    """Restore a note to a previous version.
+    
+    Replaces the current content with the saved version.
+    The version can be specified by its ID or index from the 'history list' command.
+    Use index 0 for the oldest version, 1 for the second oldest, etc.
+    
+    A backup of the current state will be automatically saved before restoring.
+    
+    Example:
+      numen history restore my-note 0
+      numen history restore my-note 20250424123456
+    """
+    from numen.history import restore_version
+    from numen.notes import resolve_note_path
+    
+    note_path = resolve_note_path(note)
+    if not note_path:
+        console.print(f"[red]Note not found: {note}[/red]")
+        return
+    
+    # Convert version to int if it's a numeric string
+    try:
+        if version.isdigit():
+            version_ref = int(version)
+        else:
+            version_ref = version
+    except (ValueError, AttributeError):
+        version_ref = version
+    
+    if not force:
+        confirm = input(f"Are you sure you want to restore note '{note_path.stem}' to version {version}? (y/N): ")
+        if confirm.lower() not in ["y", "yes"]:
+            console.print("[yellow]Restore cancelled.[/yellow]")
+            return
+    
+    success = restore_version(note_path, version_ref)
+    
+    if success:
+        console.print(f"[green]Successfully restored note to version {version}[/green]")
+    else:
+        console.print("[red]Failed to restore note.[/red]")
+
+
+@history_app.command("diff")
+def diff_versions_cmd(
+    note: str = typer.Argument(..., help="Note name"),
+    version1: str = typer.Argument(..., help="First version ID or index (0 = oldest)"),
+    version2: str = typer.Argument(..., help="Second version ID or index to compare with"),
+):
+    """Compare the differences between two versions.
+    
+    Shows what changed between two saved versions of a note.
+    Versions can be specified by IDs or indexes from the 'history list' command.
+    Use index 0 for the oldest version, 1 for the second oldest, etc.
+    
+    Example:
+      numen history diff my-note 0 1
+      numen history diff my-note 20250424123456 20250424124512
+    """
+    from numen.history import compare_versions
+    from numen.notes import resolve_note_path
+    
+    note_path = resolve_note_path(note)
+    if not note_path:
+        console.print(f"[red]Note not found: {note}[/red]")
+        return
+    
+    # Convert versions to int if they're numeric strings
+    try:
+        if version1.isdigit():
+            version_ref1 = int(version1)
+        else:
+            version_ref1 = version1
+    except (ValueError, AttributeError):
+        version_ref1 = version1
+        
+    try:
+        if version2.isdigit():
+            version_ref2 = int(version2)
+        else:
+            version_ref2 = version2
+    except (ValueError, AttributeError):
+        version_ref2 = version2
+    
+    diff_lines = compare_versions(note_path.stem, version_ref1, version_ref2)
+    
+    if not diff_lines or diff_lines[0].startswith("Error:"):
+        console.print(f"[red]{diff_lines[0] if diff_lines else 'Error comparing versions'}[/red]")
+        return
+    
+    console.print(f"[green]Differences between version {version1} and {version2}:[/green]\n")
+    
+    for line in diff_lines:
+        if line.startswith("+"):
+            console.print(f"[green]{line}[/green]")
+        elif line.startswith("-"):
+            console.print(f"[red]{line}[/red]")
+        elif line.startswith("@@"):
+            console.print(f"[cyan]{line}[/cyan]")
+        else:
+            console.print(line)
+
+
+@history_app.command("remove")
+def remove_history_cmd(
+    note: str = typer.Argument(..., help="Note to remove history for"),
+    force: bool = typer.Option(False, "--force", "-f", help="Remove without confirmation"),
+):
+    """Remove all version history for a note.
+    
+    Permanently deletes all saved versions of the note.
+    This action cannot be undone.
+    
+    Example:
+      numen history remove my-note
+      numen history remove my-note --force
+    """
+    from numen.history import remove_history
+    from numen.notes import resolve_note_path
+    
+    note_path = resolve_note_path(note)
+    if not note_path:
+        console.print(f"[red]Note not found: {note}[/red]")
+        return
+    
+    if not force:
+        confirm = input(f"Are you sure you want to delete ALL version history for note '{note_path.stem}'? (y/N): ")
+        if confirm.lower() not in ["y", "yes"]:
+            console.print("[yellow]Removal cancelled.[/yellow]")
+            return
+    
+    success = remove_history(note_path)
+    
+    if success:
+        console.print(f"[green]Successfully removed history for note: {note_path.stem}[/green]")
+    else:
+        console.print("[red]Failed to remove history.[/red]")
+
+
 if __name__ == "__main__":
-    app() 
+    app()

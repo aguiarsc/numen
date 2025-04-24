@@ -16,7 +16,7 @@ from numen.config import get_editor, get_notes_dir
 console = Console()
 
 
-def create_note(title: str) -> pathlib.Path:
+def create_note(title: str, template: Optional[str] = None) -> pathlib.Path:
     """Create a new note with the given title."""
     date_prefix = datetime.datetime.now().strftime("%Y-%m-%d")
     slug = "".join(c if c.isalnum() or c in ['-', '_'] else '-' for c in title.lower().replace(" ", "-"))
@@ -28,8 +28,21 @@ def create_note(title: str) -> pathlib.Path:
         "tags": [],
     }
     
-    content = frontmatter.Post("", **metadata)
-    content_str = frontmatter.dumps(content)
+    content = ""
+    if template:
+        try:
+            from numen.templates import apply_template, ensure_default_templates
+            ensure_default_templates()
+            template_content = apply_template(template, title)
+            if template_content:
+                content = template_content
+            else:
+                console.print(f"[yellow]Template '{template}' not found. Creating note without template.[/yellow]")
+        except ImportError:
+            console.print("[yellow]Templates module not available. Creating note without template.[/yellow]")
+    
+    note = frontmatter.Post(content, **metadata)
+    content_str = frontmatter.dumps(note)
     
     notes_dir = get_notes_dir()
     os.makedirs(notes_dir, exist_ok=True)
@@ -97,12 +110,26 @@ def display_notes(notes: List[pathlib.Path]) -> None:
 
 def edit_note(note_identifier: str) -> bool:
     """Open a note in the configured editor."""
+    from numen.config import get_editor
+    
     notes_dir = get_notes_dir()
     note_path = resolve_note_path(note_identifier)
     
     if note_path is None:
         console.print(f"[red]Note not found: {note_identifier}")
         return False
+    
+    # Save the state before editing
+    try:
+        # Import here to avoid circular imports
+        from numen.history import save_version
+        save_version(note_path, "Auto-saved before editing")
+    except ImportError:
+        # History module might not be available or configured
+        pass
+    except Exception:
+        # Don't fail the edit operation if version saving fails
+        pass
     
     editor = get_editor()
     subprocess.run([editor, str(note_path)], check=False)
